@@ -4,7 +4,9 @@ import { db } from '../utils/db.js';
 export function chatSocket(io, socket) {
   const userId = socket.user.id;
   
-  console.log(`User ${userId} connected to socket`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`User ${userId} connected to socket`);
+  }
 
   // Join global chat room
   socket.join('global');
@@ -74,6 +76,8 @@ export function chatSocket(io, socket) {
   });
 
   socket.on('disconnect', () => {
-    console.log(`User ${userId} disconnected`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`User ${userId} disconnected`);
+    }
   });
 }

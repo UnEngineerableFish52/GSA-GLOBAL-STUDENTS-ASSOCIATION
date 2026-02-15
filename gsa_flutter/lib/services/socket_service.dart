@@ -1,4 +1,5 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 
 class SocketService {
@@ -18,7 +19,7 @@ class SocketService {
     );
     
     _socket?.on('connect', (_) {
-      print('Socket connected');
+      debugPrint('Socket connected');
     });
     
     _socket?.on('message', (data) {
@@ -40,11 +41,11 @@ class SocketService {
     });
     
     _socket?.on('error', (error) {
-      print('Socket error: $error');
+      debugPrint('Socket error: $error');
     });
     
     _socket?.on('disconnect', (_) {
-      print('Socket disconnected');
+      debugPrint('Socket disconnected');
     });
   }
   
