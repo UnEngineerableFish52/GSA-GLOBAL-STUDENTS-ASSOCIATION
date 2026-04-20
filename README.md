@@ -1,100 +1,130 @@
-### GSA – Global Students Association
+# GSA – Global Students Association
 
-A dark-themed, Discord-inspired student app with chat (public/private), Q&A, and exams. This repo includes:
-- `gsa_flutter/`: Flutter client
-- `backend/`: Node.js/Express/Socket.io API (in-memory store for quick start)
-- `LICENSE`
+A dark-themed, Discord-inspired student app with chat (public/private), Q&A, and exams.
+
+| Layer | Description |
+|-------|-------------|
+| `gsa_flutter/` | Flutter client (Dart + C++ native core) |
+| `backend/` | Node.js / Express / Socket.io API (in-memory store) |
+| `gsa_flutter/native/core` | C++20 domain logic (validation, exam rules, scoring) |
+| `gsa_flutter/native/platform/android` | Android JNI bridge for the C++ core |
+
+---
+
+## 📱 Build & Install APK (Beginner Guide)
+
+> **New here?** See **[docs/BUILD_APK.md](docs/BUILD_APK.md)** for a full, step-by-step
+> guide to build a debug APK and install it on your phone or an emulator.
+
+**TL;DR (experienced Flutter developers):**
+
+```bash
+# 1. Start the backend
+cd backend && npm install && npm run dev
+
+# 2. Scaffold Android platform files (one-time only)
+cd gsa_flutter && flutter create .
+
+# 3. Install dependencies
+flutter pub get
+
+# 4. Build debug APK
+flutter build apk --debug \
+  --dart-define=API_URL=http://10.0.2.2:3000/api \
+  --dart-define=SOCKET_URL=http://10.0.2.2:3001
+# APK → gsa_flutter/build/app/outputs/flutter-apk/app-debug.apk
+
+# 5. Install on connected Android device
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+
+# Or run directly on an emulator / connected device
+flutter run \
+  --dart-define=API_URL=http://10.0.2.2:3000/api \
+  --dart-define=SOCKET_URL=http://10.0.2.2:3001
+```
+
+> On a **real phone** replace `10.0.2.2` with your computer's LAN IP (e.g. `192.168.1.10`).
+
+---
 
 ## Quick start
 
 ### Backend
-```
+```bash
 cd backend
 cp .env.example .env   # edit JWT_SECRET if desired
 npm install
-npm run dev            # starts API+Socket on PORT/SOCKET_PORT (default 3000/3001)
+npm run dev            # API on port 3000, Socket.io on port 3001
 ```
 
 ### Flutter app
-```
-cd gsa_flutter
-flutter pub get
-flutter run --dart-define=API_URL=http://10.0.2.2:3000/api --dart-define=SOCKET_URL=http://10.0.2.2:3001
-# use your LAN IP instead of 10.0.2.2 on a real device
-```
-
-### Release APK
-```
-flutter build apk --release \
-  --dart-define=API_URL=https://your.api/api \
-  --dart-define=SOCKET_URL=https://your.socket
-```
-
-### Final touch: generate `GSA.apk` from this repo
-If your local clone does not yet contain `gsa_flutter/android`, scaffold platform files first, then build:
-
 ```bash
 cd gsa_flutter
-flutter create .                         # creates android/ios/linux/... if missing
+flutter create .       # scaffold android/ once (not committed to git)
 flutter pub get
-flutter build apk --release \
-  --dart-define=API_URL=https://your.api/api \
-  --dart-define=SOCKET_URL=https://your.socket
-cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/GSA.apk
+flutter run \
+  --dart-define=API_URL=http://10.0.2.2:3000/api \
+  --dart-define=SOCKET_URL=http://10.0.2.2:3001
 ```
 
-Final APK path:
-`gsa_flutter/build/app/outputs/flutter-apk/GSA.apk`
+---
 
 ## Structure
-- `gsa_flutter/lib` – config, services (Dio, Socket.io), provider, theme, widgets, screens (Login, Dashboard, Questions, Private, Exams)
-- `backend` – Express routes (auth, questions, exams, private-chats), Socket.io events (global/private), middleware, in-memory seed data
-- `gsa_flutter/native/core` – C++20 domain/business logic (validation, exam rules, formatting, parsing)
-- `gsa_flutter/native/platform/android` – Android JNI bridge layer for native integration
-- `gsa_flutter/lib/native` – Dart FFI bridge for calling C++ logic from Flutter UI
-- `backup_pre_cpp_rewrite` – pre-rewrite backup of original tracked source/build files
 
-## C++ rewrite strategy (Play Store realistic path)
-This app is Flutter-based, so full UI rewrite into pure C++ is not practical for Play Store delivery in this repository shape.  
-The implemented strategy is a **hybrid Flutter + C++ core**:
-- Keep Flutter UI/navigation/screens as-is for velocity and compatibility
-- Move domain logic to C++20 (`gsa_flutter/native/core`)
-- Expose native behavior through Android bridge (`gsa_flutter/native/platform/android`) and Dart FFI (`gsa_flutter/lib/native`)
-
-This is the safest path to preserve feature parity while improving native execution for core rules and keeping APK production feasible.
-
-## Module port map (old → new)
-- Input validation from screens (`questions`, `private chats`, `chat`) → `gsa_core::is_non_empty`, `gsa_core::normalize_members_csv`
-- Exam submission gate logic (`exam_detail`) → `gsa_core::can_submit_exam`
-- Shared timestamp formatting (`MessageBubble`) → `gsa_core::format_timestamp_hhmm`
-- Score utility (new native utility for grading pipelines) → `gsa_core::score_percent`
-
-## Native core build and test
-Build C++ core/tests locally:
-```bash
-cd gsa_flutter/native
-cmake -S . -B build
-cmake --build build
-g++ -std=c++20 -I core/include core/src/gsa_core.cpp core/tests/gsa_core_tests.cpp -o /tmp/gsa_core_tests
-/tmp/gsa_core_tests
+```
+gsa_flutter/
+  lib/              Dart source (screens, services, providers, theme, widgets)
+  native/
+    core/           C++20 business logic (libgsa_core)
+    platform/
+      android/      JNI bridge for Android
+pubspec.yaml        Flutter package manifest
+backend/            Express API + Socket.io server
+docs/
+  BUILD_APK.md      Step-by-step APK build & install guide
 ```
 
-## Flutter side notes
-- `lib/native/gsa_native_bridge.dart` loads `libgsa_core.so` when available.
-- If native library is unavailable, it automatically falls back to equivalent Dart logic to keep behavior stable.
+---
 
-## Path to Play Store (release checklist)
-1. Ensure `gsa_flutter/android` exists (`flutter create .` once) and add NDK+CMake integration to package `libgsa_core.so` inside release APK.
-2. Set final applicationId/package name and semantic version in Android configs.
-3. Configure signing (`upload-keystore.jks`, `key.properties`) and run release builds.
-4. Enable/verify R8 rules for any JNI/FFI symbols used.
-5. Finalize privacy policy + Play Data Safety entries (network calls, auth token handling, chat data).
-6. Run regression on chat, Q&A, private chats, exams, login, and verified/guest gating across device matrix.
-7. Set CI to run backend checks + native build + Flutter analyze/test + release APK assembly.
+## C++ native core
+
+The app has an optional C++ native library. If the `.so` is absent, every call
+falls back to equivalent Dart code — **the app works without it**.
+
+Build and test the core locally:
+
+```bash
+cd gsa_flutter/native
+cmake -S . -B build && cmake --build build
+# Run unit tests
+g++ -std=c++20 -I core/include core/src/gsa_core.cpp core/tests/gsa_core_tests.cpp \
+    -o /tmp/gsa_core_tests && /tmp/gsa_core_tests
+```
+
+To include `libgsa_core.so` in the APK, see the **NDK integration** section in
+[docs/BUILD_APK.md](docs/BUILD_APK.md#10-optional-enable-c-native-library-advanced).
+
+---
+
+## Path to Play Store (checklist)
+
+1. Run `flutter create .` and add NDK + CMake config to `android/app/build.gradle`
+   to bundle `libgsa_core.so`.
+2. Set final `applicationId` and semantic `version` in `pubspec.yaml` /
+   `android/app/build.gradle`.
+3. Generate a signing key and configure `key.properties` (see
+   [docs/BUILD_APK.md](docs/BUILD_APK.md#11-signing-for-play-store)).
+4. Deploy backend to a public URL; update `API_URL` / `SOCKET_URL`.
+5. Replace default Flutter icons with the GSA logo; add to `pubspec.yaml` assets.
+6. Write a privacy policy and link it in the Play Console.
+7. Fill the Play Data Safety form (network, auth tokens, chat data).
+8. Run a full regression: login, chat, private chat, Q&A, exams.
+
+---
 
 ## Notes
-- Assets: Flutter uses default icons; replace with your neon hex "M" when ready and add to `pubspec.yaml` if you include custom assets.
-- Persistence: backend uses in-memory storage for quick demos; swap in Mongo/SQL later.
-- Auth: anonymous JWT issuance; verified flag toggled client-side for now.
-- Exams: includes sample MC/TF exam and auto-grading.
-- Chat: global and private room messaging via Socket.io.
+
+- **Persistence:** backend uses in-memory storage; swap in MongoDB/SQL for production.
+- **Auth:** anonymous JWT; `verified` flag toggled client-side (demo only).
+- **Exams:** sample MC/TF exam with auto-grading included.
+- **Chat:** global and private rooms via Socket.io.
