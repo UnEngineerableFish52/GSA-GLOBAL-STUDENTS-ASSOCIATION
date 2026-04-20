@@ -2,6 +2,15 @@
 
 A dark-themed, Discord-inspired student app with chat (public/private), Q&A, and exams.
 
+## 📦 Version Snapshots (previous + cpp)
+
+Two side-by-side snapshots are available in this repository:
+
+- `GSA_previous/` (restored pre-C++ state from commit `d1e2016`)
+- `GSA_cpp/` (current C++-hybrid main snapshot from commit `638f12b`)
+
+See [CODE_VERSIONS.md](CODE_VERSIONS.md) for details.
+
 | Layer | Description |
 |-------|-------------|
 | `gsa_flutter/` | Flutter client (Dart + C++ native core) |
