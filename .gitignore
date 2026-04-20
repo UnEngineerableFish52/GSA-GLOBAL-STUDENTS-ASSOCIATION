@@ -13,6 +13,18 @@ node_modules/
 build/
 *.lock
 
+# Android – generated / sensitive files (created by `flutter create .`)
+**/android/local.properties
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/key.properties
+**/*.jks
+**/*.keystore
+**/android/**/GeneratedPluginRegistrant.java
+**/android/**/.gradle
+
 # IDE
 .idea/
 .vscode/
