@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../native/gsa_native_bridge.dart';
 import '../providers/app_state.dart';
 import '../widgets/common_widgets.dart';
 
@@ -52,8 +51,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
   }
   
   Future<void> _submitExam() async {
-    final totalQuestions = (_exam!['questions'] as List).length;
-    if (!GsaNativeBridge.canSubmitExam(_answers.length, totalQuestions)) {
+    if (_answers.length != (_exam!['questions'] as List).length) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please answer all questions')),
       );

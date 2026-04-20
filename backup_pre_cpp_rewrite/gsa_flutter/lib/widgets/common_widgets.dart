@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../native/gsa_native_bridge.dart';
 
 class LoadingIndicator extends StatelessWidget {
   final String? message;
@@ -109,6 +108,11 @@ class MessageBubble extends StatelessWidget {
   }
   
   String _formatTimestamp(String timestamp) {
-    return GsaNativeBridge.formatTimestamp(timestamp);
+    try {
+      final dt = DateTime.parse(timestamp);
+      return '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return timestamp;
+    }
   }
 }

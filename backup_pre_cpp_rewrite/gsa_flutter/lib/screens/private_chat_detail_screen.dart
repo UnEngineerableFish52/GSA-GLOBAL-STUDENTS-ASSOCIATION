@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../native/gsa_native_bridge.dart';
 import '../providers/app_state.dart';
 import '../widgets/common_widgets.dart';
 
@@ -76,7 +75,7 @@ class _PrivateChatDetailScreenState extends State<PrivateChatDetailScreen> {
   
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (!GsaNativeBridge.isNonEmpty(text)) return;
+    if (text.isEmpty) return;
     
     final appState = Provider.of<AppState>(context, listen: false);
     appState.socketService.sendPrivateMessage(widget.chatId, text);

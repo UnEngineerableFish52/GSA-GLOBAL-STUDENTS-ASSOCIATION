@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../native/gsa_native_bridge.dart';
 import '../providers/app_state.dart';
 import '../widgets/common_widgets.dart';
-import 'private_chat_detail_screen.dart';
+import 'question_detail_screen.dart';
 
-class PrivateChatsScreen extends StatefulWidget {
-  const PrivateChatsScreen({super.key});
+class QuestionsScreen extends StatefulWidget {
+  const QuestionsScreen({super.key});
   
   @override
-  State<PrivateChatsScreen> createState() => _PrivateChatsScreenState();
+  State<QuestionsScreen> createState() => _QuestionsScreenState();
 }
 
-class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
-  List<dynamic>? _chats;
+class _QuestionsScreenState extends State<QuestionsScreen> {
+  List<dynamic>? _questions;
   bool _isLoading = false;
   String? _error;
   
   @override
   void initState() {
     super.initState();
-    _loadChats();
+    _loadQuestions();
   }
   
-  Future<void> _loadChats() async {
+  Future<void> _loadQuestions() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -31,10 +30,10 @@ class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);
-      final chats = await appState.apiService.getPrivateChats();
+      final questions = await appState.apiService.getQuestions();
       if (mounted) {
         setState(() {
-          _chats = chats;
+          _questions = questions;
           _isLoading = false;
         });
       }
@@ -48,29 +47,17 @@ class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
     }
   }
   
-  Future<void> _showCreateChatDialog() async {
-    final nameController = TextEditingController();
-    final membersController = TextEditingController();
+  Future<void> _showCreateQuestionDialog() async {
+    final controller = TextEditingController();
     
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create Private Chat'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(hintText: 'Chat name'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: membersController,
-              decoration: const InputDecoration(
-                hintText: 'Member IDs (comma-separated)',
-              ),
-            ),
-          ],
+        title: const Text('Ask a Question'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Your question...'),
+          maxLines: 3,
         ),
         actions: [
           TextButton(
@@ -79,22 +66,17 @@ class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Create'),
+            child: const Text('Ask'),
           ),
         ],
       ),
     );
     
-    if (result == true && nameController.text.trim().isNotEmpty) {
+    if (result == true && controller.text.trim().isNotEmpty) {
       try {
-        final members = GsaNativeBridge.normalizeMembersCsv(membersController.text);
-        
         final appState = Provider.of<AppState>(context, listen: false);
-        await appState.apiService.createPrivateChat(
-          nameController.text.trim(),
-          members,
-        );
-        _loadChats();
+        await appState.apiService.createQuestion(controller.text.trim());
+        _loadQuestions();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -108,36 +90,34 @@ class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const LoadingIndicator(message: 'Loading chats...');
+      return const LoadingIndicator(message: 'Loading questions...');
     }
     
     if (_error != null) {
-      return ErrorDisplay(message: _error!, onRetry: _loadChats);
+      return ErrorDisplay(message: _error!, onRetry: _loadQuestions);
     }
     
     return Scaffold(
-      body: _chats == null || _chats!.isEmpty
-          ? const Center(child: Text('No private chats yet'))
+      body: _questions == null || _questions!.isEmpty
+          ? const Center(child: Text('No questions yet'))
           : RefreshIndicator(
-              onRefresh: _loadChats,
+              onRefresh: _loadQuestions,
               child: ListView.builder(
-                itemCount: _chats!.length,
+                itemCount: _questions!.length,
                 itemBuilder: (context, index) {
-                  final chat = _chats![index];
+                  final question = _questions![index];
                   return Card(
                     margin: const EdgeInsets.all(8),
                     child: ListTile(
-                      leading: const Icon(Icons.group),
-                      title: Text(chat['name'] ?? ''),
-                      subtitle: Text('${(chat['members'] as List?)?.length ?? 0} members'),
+                      title: Text(question['text'] ?? ''),
+                      subtitle: Text('${question['replies'] ?? 0} replies'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => PrivateChatDetailScreen(
-                              chatId: chat['id'],
-                              chatName: chat['name'],
+                            builder: (_) => QuestionDetailScreen(
+                              questionId: question['id'],
                             ),
                           ),
                         );
@@ -151,7 +131,7 @@ class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
         builder: (context, appState, child) {
           if (!appState.verified) return const SizedBox.shrink();
           return FloatingActionButton(
-            onPressed: _showCreateChatDialog,
+            onPressed: _showCreateQuestionDialog,
             child: const Icon(Icons.add),
           );
         },

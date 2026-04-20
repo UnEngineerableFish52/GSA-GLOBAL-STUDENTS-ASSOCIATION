@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../native/gsa_native_bridge.dart';
 import '../providers/app_state.dart';
 import '../widgets/common_widgets.dart';
 import 'question_detail_screen.dart';
@@ -72,7 +73,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       ),
     );
     
-    if (result == true && controller.text.trim().isNotEmpty) {
+    if (result == true && GsaNativeBridge.isNonEmpty(controller.text)) {
       try {
         final appState = Provider.of<AppState>(context, listen: false);
         await appState.apiService.createQuestion(controller.text.trim());
