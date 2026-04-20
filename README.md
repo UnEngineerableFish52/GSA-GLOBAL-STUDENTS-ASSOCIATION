@@ -30,6 +30,22 @@ flutter build apk --release \
   --dart-define=SOCKET_URL=https://your.socket
 ```
 
+### Final touch: generate `GSA.apk` from this repo
+If your local clone does not yet contain `gsa_flutter/android`, scaffold platform files first, then build:
+
+```bash
+cd gsa_flutter
+flutter create .                         # creates android/ios/linux/... if missing
+flutter pub get
+flutter build apk --release \
+  --dart-define=API_URL=https://your.api/api \
+  --dart-define=SOCKET_URL=https://your.socket
+cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/GSA.apk
+```
+
+Final APK path:
+`gsa_flutter/build/app/outputs/flutter-apk/GSA.apk`
+
 ## Structure
 - `gsa_flutter/lib` – config, services (Dio, Socket.io), provider, theme, widgets, screens (Login, Dashboard, Questions, Private, Exams)
 - `backend` – Express routes (auth, questions, exams, private-chats), Socket.io events (global/private), middleware, in-memory seed data
@@ -68,7 +84,7 @@ g++ -std=c++20 -I core/include core/src/gsa_core.cpp core/tests/gsa_core_tests.c
 - If native library is unavailable, it automatically falls back to equivalent Dart logic to keep behavior stable.
 
 ## Path to Play Store (release checklist)
-1. Add `gsa_flutter/android` NDK+CMake integration to package `libgsa_core.so` inside release APK.
+1. Ensure `gsa_flutter/android` exists (`flutter create .` once) and add NDK+CMake integration to package `libgsa_core.so` inside release APK.
 2. Set final applicationId/package name and semantic version in Android configs.
 3. Configure signing (`upload-keystore.jks`, `key.properties`) and run release builds.
 4. Enable/verify R8 rules for any JNI/FFI symbols used.
