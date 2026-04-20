@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../native/gsa_native_bridge.dart';
 import '../providers/app_state.dart';
 import '../widgets/common_widgets.dart';
 
@@ -52,7 +51,7 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
   
   Future<void> _submitReply() async {
     final text = _replyController.text.trim();
-    if (!GsaNativeBridge.isNonEmpty(text)) return;
+    if (text.isEmpty) return;
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);

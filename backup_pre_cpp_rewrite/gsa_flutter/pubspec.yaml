@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  ffi: ^2.1.2
   
   # Network
   dio: ^5.4.0

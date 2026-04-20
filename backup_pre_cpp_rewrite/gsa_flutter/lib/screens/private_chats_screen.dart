@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../native/gsa_native_bridge.dart';
 import '../providers/app_state.dart';
 import '../widgets/common_widgets.dart';
 import 'private_chat_detail_screen.dart';
@@ -87,7 +86,11 @@ class _PrivateChatsScreenState extends State<PrivateChatsScreen> {
     
     if (result == true && nameController.text.trim().isNotEmpty) {
       try {
-        final members = GsaNativeBridge.normalizeMembersCsv(membersController.text);
+        final members = membersController.text
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
         
         final appState = Provider.of<AppState>(context, listen: false);
         await appState.apiService.createPrivateChat(
