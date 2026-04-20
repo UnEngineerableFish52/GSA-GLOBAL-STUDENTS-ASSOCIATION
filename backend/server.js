@@ -37,7 +37,7 @@ const io = new SocketIOServer(httpServer, {
   cors: { origin: allowedOrigins.length ? allowedOrigins : '*', credentials: true },
 });
 
-oi.use(authSocketMiddleware);
+io.use(authSocketMiddleware);
 io.on('connection', (socket) => chatSocket(io, socket));
 
 httpServer.listen(SOCKET_PORT, () => {
